@@ -91,6 +91,14 @@ curl -s -X POST http://localhost:8000/search \
 `make down` tears the stack down. `make test` runs the unit tests (fusion, filter translation,
 cursor binding, embedder) without needing Postgres running.
 
+## The console
+
+Below: `why is my payment failing` under the hybrid profile — the meaning-carried chunk ranks
+first via the semantic leg, and every result's `lexicalRank`/`semanticRank` badges show exactly
+which leg of the fusion found it.
+
+![The Semantic Search API console — hybrid results with per-result lexical/semantic rank diagnostics and response KPIs](./docs/images/console-search.png)
+
 ## Relevance — measured, not assumed
 
 [ADR-0005](./docs/adr/0005-relevance-as-slo.md) says search quality is a measured SLO. The golden
