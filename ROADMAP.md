@@ -68,13 +68,35 @@ the fusion logic; a cursor from one query rejected against a different query ret
 
 **Goal:** make search quality a measured objective, not a subjective impression.
 
-| Issue | Deliverable |
-| --- | --- |
-| Golden query set | Queries with judged relevant results |
-| Relevance metrics | nDCG and recall at k, defined and computed |
-| Regression harness | Run the set on a change; assert relevance did not drop |
-| Ranking A/B | Compare two ranking configurations on the same set |
-| Freshness check | A newly indexed document is findable within the freshness target |
+| Issue | Deliverable | Status |
+| --- | --- | --- |
+| Golden query set | Queries with judged relevant results | Done — [relevance/golden-set.jsonl](./relevance/golden-set.jsonl), one query per ADR-0003 blind spot |
+| Relevance metrics | nDCG and recall at k, defined and computed | Done — [src/search_api/metrics.py](./src/search_api/metrics.py) |
+| Regression harness | Run the set on a change; assert relevance did not drop | Done — `make relevance-check`, gates on [relevance/baseline.json](./relevance/baseline.json) |
+| Ranking A/B | Compare two ranking configurations on the same set | Done — `make relevance-ab` |
+| Freshness check | A newly indexed document is findable within the freshness target | Done — `make freshness` |
+
+**Exit criteria met**, measured, not assumed — running `make relevance-ab` against the seeded corpus:
+
+| Profile | avg nDCG@10 | avg recall@10 |
+| --- | --- | --- |
+| hybrid | **0.971** | **1.000** |
+| semantic | 0.959 | 1.000 |
+| lexical | 0.960 | 0.952 |
+
+Hybrid beats both single-signal profiles on the same set — lexical alone misses part of the
+meaning-carried query (`recall@10 = 0.667` on that query alone; the semantic leg recovers it), and
+semantic alone loses a little precision on the exact-identifier and proper-noun queries relative to
+hybrid. The regression harness was verified to actually gate: corrupting a golden judgment to an
+unreachable chunk id drops nDCG@10 from 0.971 to 0.828 and `relevance check` correctly fails
+(exit 1) past the 0.02 tolerance.
+
+Building this harness surfaced a real lexical-search bug, not a hypothetical one: `plainto_tsquery`
+ANDs every term in the query, so a chunk containing only *some* of the query's lexemes (e.g. the
+identifier but not the word "error") was silently excluded rather than merely ranked lower. Fixed
+in [search.py](./src/search_api/search.py) by turning the query into an OR of its own lexemes and
+letting `ts_rank_cd` rank by overlap — exactly the kind of fusion-adjacent bug ADR-0005 exists to
+catch with a number instead of a hunch.
 
 **Exit criteria:** a ranking change that degrades relevance is caught by the harness before it ships,
 with a number, not a hunch.

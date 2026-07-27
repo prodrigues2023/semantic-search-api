@@ -5,7 +5,7 @@
 > query, and relevance measured as an SLO. Documented first, provider-neutral, implemented in the
 > open.
 
-[![Phase](https://img.shields.io/badge/phase-3%20reference%20implementation-blue)](./ROADMAP.md)
+[![Phase](https://img.shields.io/badge/phase-4%20relevance-blue)](./ROADMAP.md)
 [![ADRs](https://img.shields.io/badge/ADRs-6-green)](./docs/adr)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](./LICENSE)
 
@@ -35,6 +35,7 @@ repository is the design for that service — the layer above a vector store tha
 | Architecture Decision Records | 6 published | [docs/adr](./docs/adr) |
 | Contracts (schema, filter grammar, relevance-set format) | Done — Phase 2 | [ADR-0006](./docs/adr/0006-request-response-schema.md) · [filter-grammar.md](./docs/filter-grammar.md) · [relevance-set-format.md](./docs/relevance-set-format.md) |
 | Reference implementation (hybrid search, filtering, pagination) | Done — Phase 3 | [Quickstart](#quickstart) below |
+| Relevance (golden set, metrics, regression gate, ranking A/B) | Done — Phase 4 | [relevance/golden-set.jsonl](./relevance/golden-set.jsonl), results in [ROADMAP.md](./ROADMAP.md) |
 
 ## The idea
 
@@ -90,6 +91,25 @@ curl -s -X POST http://localhost:8000/search \
 `make down` tears the stack down. `make test` runs the unit tests (fusion, filter translation,
 cursor binding, embedder) without needing Postgres running.
 
+## Relevance — measured, not assumed
+
+[ADR-0005](./docs/adr/0005-relevance-as-slo.md) says search quality is a measured SLO. The golden
+query set ([relevance/golden-set.jsonl](./relevance/golden-set.jsonl)) covers the blind spots
+[ranking.md](./docs/ranking.md) names, and `make relevance-ab` measures all three ranking profiles
+against it:
+
+| Profile | avg nDCG@10 | avg recall@10 |
+| --- | --- | --- |
+| hybrid | **0.971** | **1.000** |
+| semantic | 0.959 | 1.000 |
+| lexical | 0.960 | 0.952 |
+
+Hybrid wins because it recovers what each single signal misses on its own — see
+[ROADMAP.md](./ROADMAP.md#milestone-4--relevance) for the per-query breakdown. `make
+relevance-check` re-runs the set and fails the build if a change drops relevance past a small
+tolerance against [relevance/baseline.json](./relevance/baseline.json); `make freshness` confirms a
+newly indexed chunk is immediately findable.
+
 ## Why documented first
 
 The API contract and the ranking model are the expensive, hard-to-change parts. Once a product depends
@@ -106,7 +126,7 @@ Four phases, tracked as GitHub milestones. See [ROADMAP.md](./ROADMAP.md).
 1. **Design** — the API contract, hybrid ranking, filtering, relevance as an SLO, the ADRs — done
 2. **Contracts** — the request/response schema, the filter grammar, the relevance-set format — done
 3. **Reference implementation** — a search service with hybrid ranking and filtering, locally — done
-4. **Relevance** — a golden query set and a harness that catches a ranking regression
+4. **Relevance** — a golden query set and a harness that catches a ranking regression — done
 
 ## Related
 

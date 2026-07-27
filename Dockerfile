@@ -6,6 +6,7 @@ COPY pyproject.toml ./
 COPY src ./src
 COPY console ./console
 COPY corpus ./corpus
+COPY relevance ./relevance
 
 RUN pip install --no-cache-dir .
 

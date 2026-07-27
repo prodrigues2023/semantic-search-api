@@ -25,12 +25,24 @@ def _pool_size(limit: int) -> int:
 
 def _run_lexical(session, query: str, filters: list[dict], pool: int):
     where_sql, where_params = build_filter_clause(filters, "lf")
+    # plainto_tsquery ANDs every term together, which starves recall the
+    # moment a relevant chunk contains some but not all of the query's
+    # lexemes (e.g. one chunk says "error E-4021", another just "E-4021" --
+    # AND semantics drops the second). Building an OR query over the same
+    # lexemes lets ts_rank_cd do the job of ranking by overlap instead of a
+    # hard gate rejecting partial matches.
     sql = text(
         f"""
+        WITH query_ts AS (
+            SELECT to_tsquery(
+                'english',
+                NULLIF(array_to_string(tsvector_to_array(to_tsvector('english', :q)), ' | '), '')
+            ) AS tsq
+        )
         SELECT c.id, c.document_id, c.chunk_index, c.text, c.metadata,
-               ts_rank_cd(c.tsv, plainto_tsquery('english', :q)) AS score
-        FROM chunks c
-        WHERE c.tsv @@ plainto_tsquery('english', :q) AND {where_sql}
+               ts_rank_cd(c.tsv, query_ts.tsq) AS score
+        FROM chunks c, query_ts
+        WHERE query_ts.tsq IS NOT NULL AND c.tsv @@ query_ts.tsq AND {where_sql}
         ORDER BY score DESC, c.id ASC
         LIMIT :pool
         """
