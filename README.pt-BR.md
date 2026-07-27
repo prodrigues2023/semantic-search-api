@@ -5,8 +5,8 @@
 > query, e relevância medida como SLO. Documentado primeiro, neutro de fornecedor, implementado em
 > público.
 
-[![Fase](https://img.shields.io/badge/fase-1%20design-blue)](./ROADMAP.md)
-[![ADRs](https://img.shields.io/badge/ADRs-5-green)](./docs/adr)
+[![Fase](https://img.shields.io/badge/fase-3%20implementa%C3%A7%C3%A3o-blue)](./ROADMAP.md)
+[![ADRs](https://img.shields.io/badge/ADRs-6-green)](./docs/adr)
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-lightgrey)](./LICENSE)
 
 A maioria das buscas semânticas nasce como notebook: embeda documentos, embeda a query, retorna os
@@ -32,8 +32,9 @@ design desse serviço — a camada acima de um vector store que um produto real 
 | Contrato de API | Pronto | [docs/api-contract.md](./docs/api-contract.md) |
 | Ranking — híbrido e fundido | Pronto | [docs/ranking.md](./docs/ranking.md) |
 | Diagramas de requisição | Pronto | [docs/diagrams](./docs/diagrams) |
-| Registros de Decisão de Arquitetura | 5 publicados | [docs/adr](./docs/adr) |
-| Implementação de referência | Planejada — Fase 3 | [ROADMAP.md](./ROADMAP.md) |
+| Registros de Decisão de Arquitetura | 6 publicados | [docs/adr](./docs/adr) |
+| Contratos (schema, gramática de filtros, formato do golden set) | Pronto — Fase 2 | [ADR-0006](./docs/adr/0006-request-response-schema.md) |
+| Implementação de referência (busca híbrida, filtragem, paginação) | Pronta — Fase 3 | `make up` (veja o README em inglês) |
 
 ## A ideia
 
@@ -56,9 +57,9 @@ um serviço.** Quatro decisões, cada uma um ADR:
 
 Quatro fases, acompanhadas como milestones no GitHub. Detalhes em [ROADMAP.md](./ROADMAP.md).
 
-1. **Design** — o contrato de API, ranking híbrido, filtragem, relevância como SLO, os ADRs
-2. **Contratos** — o schema de request/response, a gramática de filtros, o formato do conjunto de relevância
-3. **Implementação de referência** — um serviço de busca com ranking híbrido e filtragem, local
+1. **Design** — o contrato de API, ranking híbrido, filtragem, relevância como SLO, os ADRs — pronto
+2. **Contratos** — o schema de request/response, a gramática de filtros, o formato do conjunto de relevância — pronto
+3. **Implementação de referência** — um serviço de busca com ranking híbrido e filtragem, local — pronto
 4. **Relevância** — um golden query set e um harness que pega uma regressão de ranking
 
 ## Relacionados

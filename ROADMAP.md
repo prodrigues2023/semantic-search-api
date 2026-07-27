@@ -48,16 +48,19 @@ agree on every field. **Met.**
 
 **Goal:** `make up` runs a search service with hybrid ranking and filtering over a sample corpus.
 
-| Issue | Deliverable |
-| --- | --- |
-| Search endpoint | The API contract, backed by a vector store and a lexical index |
-| Hybrid ranking | Lexical and semantic retrieval fused into one ranked list |
-| Filtered search | Filters applied with ranking, not as a post-filter |
-| Pagination and scores | Stable pagination and scores callers can reason about |
-| Local environment | One command, stubbed model, sample corpus, no cloud account |
+| Issue | Deliverable | Status |
+| --- | --- | --- |
+| Search endpoint | The API contract, backed by a vector store and a lexical index | Done — FastAPI `/search`, Postgres + pgvector |
+| Hybrid ranking | Lexical and semantic retrieval fused into one ranked list | Done — `src/search_api/ranking.py`, Reciprocal Rank Fusion |
+| Filtered search | Filters applied with ranking, not as a post-filter | Done — `src/search_api/filters.py`, pushed into both legs |
+| Pagination and scores | Stable pagination and scores callers can reason about | Done — opaque cursor bound to query/filters/profile hash |
+| Local environment | One command, stubbed model, sample corpus, no cloud account | Done — `make up`, deterministic stub embedder, 6-doc corpus |
 
 **Exit criteria:** a first-time reader searches with a filter, gets ranked results with scores, and
-sees an exact-term query and a semantic query both work.
+sees an exact-term query and a semantic query both work. **Met** — verified live: `error code
+E-4021` ranks the exact-match chunk first via `lexicalRank=1`; `why is my payment failing` ranks a
+paraphrased chunk first via the semantic leg; a `category` filter narrows results without changing
+the fusion logic; a cursor from one query rejected against a different query returns `400`.
 
 ---
 

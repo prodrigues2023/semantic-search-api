@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>semantic-search-api console</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, Segoe UI, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.3rem; }
+  .row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  input[type=text] { flex: 1; min-width: 260px; padding: 0.5rem; font-size: 1rem; }
+  select, button { padding: 0.5rem; font-size: 1rem; }
+  .filters { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; align-items: center; }
+  .filters input { padding: 0.35rem; }
+  .example { font-size: 0.85rem; cursor: pointer; text-decoration: underline; margin-right: 0.75rem; opacity: 0.8; }
+  .result { border: 1px solid #8884; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.6rem; }
+  .result .meta { font-size: 0.8rem; opacity: 0.7; display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.4rem; }
+  .score { font-weight: 600; }
+  .diag { font-size: 0.75rem; opacity: 0.65; }
+  .empty, .error { opacity: 0.75; font-style: italic; }
+  .error { color: #c0392b; }
+  pre.diagbox { font-size: 0.75rem; background: #8881; padding: 0.5rem; border-radius: 6px; overflow-x: auto; }
+</style>
+</head>
+<body>
+<h1>semantic-search-api — reference implementation console</h1>
+<p style="opacity:0.75">Hybrid ranking over a single Postgres: pgvector for the semantic leg, <code>tsvector</code>/<code>ts_rank_cd</code> for the lexical leg, fused by Reciprocal Rank Fusion.</p>
+
+<div class="row">
+  <span class="example" data-q="error code E-4021">exact identifier</span>
+  <span class="example" data-q="idempotency key collision">rare term</span>
+  <span class="example" data-q="the Henderson contract">proper noun</span>
+  <span class="example" data-q="refund">short keyword</span>
+  <span class="example" data-q="why is my payment failing">meaning-carried</span>
+</div>
+
+<div class="row">
+  <input id="query" type="text" placeholder="search..." value="why is my payment failing" />
+  <select id="profile">
+    <option value="hybrid" selected>hybrid</option>
+    <option value="semantic">semantic</option>
+    <option value="lexical">lexical</option>
+  </select>
+  <button id="go">Search</button>
+</div>
+
+<div class="filters">
+  <label>filter: field</label>
+  <input id="ffield" type="text" placeholder="category" />
+  <label>op</label>
+  <select id="fop">
+    <option value="eq">eq</option>
+    <option value="in">in</option>
+  </select>
+  <label>value</label>
+  <input id="fvalue" type="text" placeholder="billing (or a,b for in)" />
+</div>
+
+<div id="results"></div>
+<div id="diag"></div>
+
+<script>
+const el = (id) => document.getElementById(id);
+
+document.querySelectorAll(".example").forEach(e => {
+  e.addEventListener("click", () => { el("query").value = e.dataset.q; runSearch(); });
+});
+el("go").addEventListener("click", () => runSearch(0, null));
+el("query").addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
+
+let lastCursor = null;
+
+async function runSearch(offset, cursor) {
+  const query = el("query").value.trim();
+  const profile = el("profile").value;
+  const resultsEl = el("results");
+  const diagEl = el("diag");
+  if (!query) return;
+
+  const filters = [];
+  const field = el("ffield").value.trim();
+  const op = el("fop").value;
+  const rawValue = el("fvalue").value.trim();
+  if (field && rawValue) {
+    const value = op === "in" ? rawValue.split(",").map(v => v.trim()) : rawValue;
+    filters.push({ field, op, value });
+  }
+
+  const body = {
+    query,
+    filters,
+    pagination: { cursor: cursor || null, limit: 10 },
+    options: { profile },
+  };
+
+  resultsEl.innerHTML = "<p class='empty'>searching...</p>";
+  try {
+    const res = await fetch("/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      resultsEl.innerHTML = `<p class='error'>${res.status}: ${err.detail || "request failed"}</p>`;
+      diagEl.innerHTML = "";
+      return;
+    }
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    resultsEl.innerHTML = `<p class='error'>${e}</p>`;
+  }
+}
+
+function render(data) {
+  const resultsEl = el("results");
+  const diagEl = el("diag");
+  lastCursor = data.pagination.nextCursor;
+
+  if (data.results.length === 0) {
+    resultsEl.innerHTML = "<p class='empty'>no results.</p>";
+  } else {
+    resultsEl.innerHTML = data.results.map(r => `
+      <div class="result">
+        <div><span class="score">${r.score.toFixed(3)}</span> — ${r.text}</div>
+        <div class="meta">
+          <span>doc: ${r.documentId}</span>
+          <span>chunk: ${r.chunkId}</span>
+          <span>source: ${r.provenance.sourceUri}</span>
+        </div>
+        ${r.diagnostics ? `<div class="diag">lexicalRank=${r.diagnostics.lexicalRank ?? "—"} semanticRank=${r.diagnostics.semanticRank ?? "—"} lexicalScore=${r.diagnostics.lexicalScore?.toFixed(3) ?? "—"} semanticScore=${r.diagnostics.semanticScore?.toFixed(3) ?? "—"}</div>` : ""}
+      </div>
+    `).join("");
+  }
+
+  diagEl.innerHTML = `<pre class="diagbox">${JSON.stringify(data.diagnostics, null, 2)}${data.pagination.nextCursor ? "\nnextCursor available" : ""}</pre>`;
+}
+</script>
+</body>
+</html>
