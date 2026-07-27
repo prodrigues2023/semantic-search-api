@@ -32,15 +32,15 @@ the contract hiding the model and store behind it.
 
 **Goal:** the formats are specified, so a caller and the service integrate consistently.
 
-| Issue | Deliverable |
-| --- | --- |
-| Request/response schema | Query, filters, pagination, and ranked results with scores and provenance |
-| Filter grammar | The set of filter operators and how they compose |
-| Relevance-set format | Queries, judged results, and the metric definitions |
-| ADR-0006 | Request/response schema and filter grammar |
+| Issue | Deliverable | Status |
+| --- | --- | --- |
+| Request/response schema | Query, filters, pagination, and ranked results with scores and provenance | Done — [ADR-0006](./docs/adr/0006-request-response-schema.md), [schemas](./contracts/schemas) |
+| Filter grammar | The set of filter operators and how they compose | Done — [filter-grammar.md](./docs/filter-grammar.md) |
+| Relevance-set format | Queries, judged results, and the metric definitions | Done — [relevance-set-format.md](./docs/relevance-set-format.md) |
+| ADR-0006 | Request/response schema and filter grammar | Done — [ADR-0006](./docs/adr/0006-request-response-schema.md) |
 
 **Exit criteria:** a client and the service could be built independently against the contracts and
-agree on every field.
+agree on every field. **Met.**
 
 ---
 

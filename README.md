@@ -5,8 +5,8 @@
 > query, and relevance measured as an SLO. Documented first, provider-neutral, implemented in the
 > open.
 
-[![Phase](https://img.shields.io/badge/phase-1%20design-blue)](./ROADMAP.md)
-[![ADRs](https://img.shields.io/badge/ADRs-5-green)](./docs/adr)
+[![Phase](https://img.shields.io/badge/phase-2%20contracts-blue)](./ROADMAP.md)
+[![ADRs](https://img.shields.io/badge/ADRs-6-green)](./docs/adr)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](./LICENSE)
 
 Most semantic search starts life as a notebook: embed some documents, embed the query, return the
@@ -32,7 +32,8 @@ repository is the design for that service — the layer above a vector store tha
 | API contract | Done | [docs/api-contract.md](./docs/api-contract.md) |
 | Ranking — hybrid and fused | Done | [docs/ranking.md](./docs/ranking.md) |
 | Request diagrams | Done | [docs/diagrams](./docs/diagrams) |
-| Architecture Decision Records | 5 published | [docs/adr](./docs/adr) |
+| Architecture Decision Records | 6 published | [docs/adr](./docs/adr) |
+| Contracts (schema, filter grammar, relevance-set format) | Done — Phase 2 | [ADR-0006](./docs/adr/0006-request-response-schema.md) · [filter-grammar.md](./docs/filter-grammar.md) · [relevance-set-format.md](./docs/relevance-set-format.md) |
 | Reference implementation | Planned — Phase 3 | [ROADMAP.md](./ROADMAP.md) |
 
 ## The idea
@@ -53,6 +54,14 @@ service.** Four decisions, each an ADR:
 - **Relevance is a measured SLO** ([ADR-0005](./docs/adr/0005-relevance-as-slo.md)). Search quality is
   an objective tracked against a golden query set, not a subjective "seems good" — so a change that
   degrades relevance is caught like any other regression.
+
+## Stack (Milestone 3, planned)
+
+**Python + FastAPI + one Postgres** — pgvector for the semantic index, `tsvector`/`ts_rank_cd`
+(Postgres full-text search) for the lexical signal, no second search engine to run. Reciprocal
+Rank Fusion combines the two rankings ([ADR-0003](./docs/adr/0003-hybrid-ranking.md)); filters
+are pushed into both underlying queries before the top-k is taken
+([ADR-0004](./docs/adr/0004-filtering-in-the-query.md)), never applied after.
 
 ## Why documented first
 

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prodrigues2023.github.io/semantic-search-api/schemas/search-response.json",
+  "title": "SearchResponse",
+  "description": "A ranked list with defined scores and provenance (ADR-0002). Score is fused-rank-derived, in (0,1], comparable only within this response -- never across queries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["results", "pagination", "diagnostics"],
+  "properties": {
+    "results": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "pagination": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "nextCursor": { "type": ["string", "null"] } }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "filterApplied": { "type": "boolean" },
+        "filterExcludedAll": { "type": "boolean" },
+        "candidatesLexical": { "type": "integer" },
+        "candidatesSemantic": { "type": "integer" }
+      }
+    }
+  },
+  "$defs": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentId", "chunkId", "text", "score", "provenance"],
+      "properties": {
+        "documentId": { "type": "string" },
+        "chunkId": { "type": "string" },
+        "text": { "type": "string" },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sourceUri": { "type": "string" },
+            "chunkIndex": { "type": "integer" }
+          }
+        },
+        "diagnostics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lexicalRank": { "type": ["integer", "null"] },
+            "semanticRank": { "type": ["integer", "null"] },
+            "lexicalScore": { "type": ["number", "null"] },
+            "semanticScore": { "type": ["number", "null"] }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "results": [
+        {
+          "documentId": "doc-042",
+          "chunkId": "doc-042:3",
+          "text": "Declined transactions are retried automatically for up to three attempts.",
+          "score": 0.83,
+          "provenance": { "sourceUri": "kb/billing/retries.md", "chunkIndex": 3 },
+          "diagnostics": { "lexicalRank": 2, "semanticRank": 11, "lexicalScore": 4.1, "semanticScore": 0.71 }
+        }
+      ],
+      "pagination": { "nextCursor": null },
+      "diagnostics": { "filterApplied": true, "filterExcludedAll": false, "candidatesLexical": 214, "candidatesSemantic": 500 }
+    }
+  ]
+}

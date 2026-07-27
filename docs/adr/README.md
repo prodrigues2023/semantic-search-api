@@ -10,7 +10,7 @@ See [ADR-0001](./0001-record-architecture-decisions.md) for the process itself.
 | [0003](./0003-hybrid-ranking.md) | Ranking is hybrid — lexical and semantic, fused | Accepted |
 | [0004](./0004-filtering-in-the-query.md) | Filtering is part of the query, applied with ranking | Accepted |
 | [0005](./0005-relevance-as-slo.md) | Relevance is a measured SLO, not a subjective call | Accepted |
-| 0006 | Request/response schema and filter grammar | Planned — Milestone 2 |
+| [0006](./0006-request-response-schema.md) | Request/response schema and filter grammar | Accepted |
 
 ## How the accepted decisions fit together
 

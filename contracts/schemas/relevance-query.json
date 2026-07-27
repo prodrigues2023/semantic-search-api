@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prodrigues2023.github.io/semantic-search-api/schemas/relevance-query.json",
+  "title": "RelevanceQuery",
+  "description": "One entry in the golden query set (ADR-0005, docs/relevance-set-format.md): a query with graded relevance judgments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["queryId", "query", "judgments"],
+  "properties": {
+    "queryId": { "type": "string", "minLength": 1 },
+    "query": { "type": "string", "minLength": 1 },
+    "filters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "op", "value"],
+        "properties": {
+          "field": { "type": "string" },
+          "op": { "type": "string", "enum": ["eq", "in", "gte", "lte"] },
+          "value": {}
+        }
+      },
+      "default": []
+    },
+    "judgments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["chunkId", "grade"],
+        "properties": {
+          "chunkId": { "type": "string" },
+          "grade": { "type": "integer", "minimum": 0, "maximum": 3 }
+        }
+      }
+    },
+    "note": { "type": "string" }
+  },
+  "examples": [
+    {
+      "queryId": "q-001",
+      "query": "why is my payment failing",
+      "filters": [],
+      "judgments": [
+        { "chunkId": "doc-042:3", "grade": 3 },
+        { "chunkId": "doc-042:1", "grade": 2 }
+      ],
+      "note": "Exact-term-light, meaning-carried query -- should favour semantic ranking."
+    }
+  ]
+}
